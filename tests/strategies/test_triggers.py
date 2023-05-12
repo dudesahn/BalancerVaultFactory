@@ -88,6 +88,7 @@ def test_triggers(
         # check that we have claimable profit, need this for min and max profit checks below
         claimable_profit = strategy.claimableProfitInUsdc()
         assert claimable_profit > 0
+        print("🤑 Claimable profit >0")
 
         if not (is_slippery and no_profit):
             # update our minProfit so our harvest triggers true
@@ -241,6 +242,7 @@ def test_triggers(
                 # check that we have claimable profit, need this for min and max profit checks below
                 claimable_profit = strategy.claimableProfitInUsdc()
                 assert claimable_profit > 0
+                print("🤑 Claimable profit >0")
 
                 # update our minProfit so our harvest triggers true
                 strategy.setHarvestTriggerParams(

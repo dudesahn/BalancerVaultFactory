@@ -34,10 +34,8 @@ interface IGaugeController {
 }
 
 interface FeeDistribution {
-    function claimToken(address user, IERC20 token)
-        external
-        returns (uint256);
-    
+    function claimToken(address user, IERC20 token) external returns (uint256);
+
     function getUserTimeCursor(address user) external view returns (uint256);
 }
 
@@ -49,7 +47,8 @@ contract StrategyProxy {
     uint256 private constant WEEK = 604800; // Number of seconds in a week
 
     /// @notice Yearn's voter proxy. Typically referred to as "voter".
-    IProxy public constant proxy = IProxy(0xBA11E7024cbEB1dd2B401C70A83E0d964144686C);
+    IProxy public constant proxy =
+        IProxy(0xBA11E7024cbEB1dd2B401C70A83E0d964144686C);
 
     /// @notice Balancer's token minter.
     address public constant mintr = 0x239e55F427D44C3cc793f49bFB507ebe76638a2b;
@@ -58,19 +57,23 @@ contract StrategyProxy {
     address public constant bal = 0xba100000625a3754423978a60c9317c58a424e3D;
 
     /// @notice Curve's BAL/WETH token address.
-    address public constant balweth = 0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56;
+    address public constant balweth =
+        0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56;
 
     /// @notice Recipient of weekly bb-a-USD admin fees. Default of st-yBAL strategy address.
     address public feeRecipient = 0x93A62dA5a14C80f265DAbC077fCEE437B1a0Efde; // incorrect - st-yBAL strat yet to be deployed
 
     /// @notice Balancer's fee distributor contract.
-    FeeDistribution public constant feeDistribution = FeeDistribution(0xD3cf852898b21fc233251427c2DC93d3d604F3BB);
+    FeeDistribution public constant feeDistribution =
+        FeeDistribution(0xD3cf852898b21fc233251427c2DC93d3d604F3BB);
 
     /// @notice Balancer's vote-escrowed BAL address.
-    VeBAL public constant veBAL  = VeBAL(0xC128a9954e6c874eA3d62ce62B468bA073093F25);
+    VeBAL public constant veBAL =
+        VeBAL(0xC128a9954e6c874eA3d62ce62B468bA073093F25);
 
     /// @notice Balancer's gauge controller.
-    IGaugeController public constant gaugeController = IGaugeController(0xC128468b7Ce63eA702C1f104D55A2566b13D3ABD);
+    IGaugeController public constant gaugeController =
+        IGaugeController(0xC128468b7Ce63eA702C1f104D55A2566b13D3ABD);
 
     /// @notice The token Balancer pays fees in.
     address public feeToken = 0xA13a9247ea42D743238089903570127DdA72fE44;
@@ -93,7 +96,7 @@ contract StrategyProxy {
     /// @notice Current governance address.
     address public governance = 0xFEB4acf3df3cDEA7399794D0869ef76A6EfAff52;
 
-    /// @notice Curve vault factory address. 
+    /// @notice Curve vault factory address.
     address public factory;
 
     /// @notice This voter's last time cursor, updated on each claim of admin fees.
@@ -110,11 +113,21 @@ contract StrategyProxy {
     event LockerRevoked(address indexed locker);
     event BalFeesClaimed(address indexed recipient, uint256 amount);
     event AdminFeesClaimed(address indexed recipient, uint256 amount);
-    event ExtraTokenRecipientApproved(address indexed token, address indexed recipient);
-    event ExtraTokenRecipientRevoked(address indexed token, address indexed recipient);
+    event ExtraTokenRecipientApproved(
+        address indexed token,
+        address indexed recipient
+    );
+    event ExtraTokenRecipientRevoked(
+        address indexed token,
+        address indexed recipient
+    );
     event RewardTokenApproved(address indexed token, bool approved);
     event FactorySet(address indexed factory);
-    event TokenClaimed(address indexed token, address indexed recipient, uint balance);
+    event TokenClaimed(
+        address indexed token,
+        address indexed recipient,
+        uint balance
+    );
     event FeeTokenSet(address indexed feeToken);
 
     /// @notice Set Balancer vault factory address.
@@ -126,7 +139,7 @@ contract StrategyProxy {
         factory = _factory;
         emit FactorySet(_factory);
     }
-    
+
     /// @notice Set governance address.
     /// @dev Must be called by current governance.
     /// @param _governance Address to set as governance.
@@ -177,7 +190,10 @@ contract StrategyProxy {
     ///  Must be called by governance.
     /// @param _token Token to permit a recipient for.
     /// @param _recipient Recipient to approve for token.
-    function approveExtraTokenRecipient(address _token, address _recipient) external {
+    function approveExtraTokenRecipient(
+        address _token,
+        address _recipient
+    ) external {
         require(msg.sender == governance, "!governance");
         require(_recipient != address(0), "disallow zero");
         require(extraTokenRecipient[_token] != _recipient, "already approved");
@@ -206,7 +222,15 @@ contract StrategyProxy {
         require(msg.sender == recipient);
         uint256 _balance = IERC20(_token).balanceOf(address(proxy));
         if (_balance > 0) {
-            proxy.safeExecute(_token, 0, abi.encodeWithSignature("transfer(address,uint256)", recipient, _balance));
+            proxy.safeExecute(
+                _token,
+                0,
+                abi.encodeWithSignature(
+                    "transfer(address,uint256)",
+                    recipient,
+                    _balance
+                )
+            );
             emit TokenClaimed(_token, recipient, _balance);
         }
     }
@@ -265,10 +289,10 @@ contract StrategyProxy {
         require(msg.sender == governance || lockers[msg.sender], "!locker");
         uint max = block.timestamp + (365 days);
         uint lock_end = veBAL.locked__end(address(proxy));
-        if(lock_end < (max / WEEK) * WEEK){
+        if (lock_end < (max / WEEK) * WEEK) {
             proxy.safeExecute(
-                address(veBAL), 
-                0, 
+                address(veBAL),
+                0,
                 abi.encodeWithSignature("increase_unlock_time(uint256)", max)
             );
         }
@@ -287,16 +311,27 @@ contract StrategyProxy {
     /// @dev Must be called by governance or voter.
     /// @param _gauges List of gauges to vote on.
     /// @param _weights List of weight to vote with.
-    function vote_many(address[] calldata _gauges, uint256[] calldata _weights) external {
+    function vote_many(
+        address[] calldata _gauges,
+        uint256[] calldata _weights
+    ) external {
         require(msg.sender == governance || voters[msg.sender], "!voter");
         require(_gauges.length == _weights.length, "!mismatch");
-        for(uint256 i = 0; i < _gauges.length; i++) {
+        for (uint256 i = 0; i < _gauges.length; i++) {
             _vote(_gauges[i], _weights[i]);
         }
     }
 
     function _vote(address _gauge, uint256 _weight) internal {
-        proxy.safeExecute(address(gaugeController), 0, abi.encodeWithSignature("vote_for_gauge_weights(address,uint256)", _gauge, _weight));
+        proxy.safeExecute(
+            address(gaugeController),
+            0,
+            abi.encodeWithSignature(
+                "vote_for_gauge_weights(address,uint256)",
+                _gauge,
+                _weight
+            )
+        );
     }
 
     /// @notice Withdraw exact amount of LPs from gauge.
@@ -311,9 +346,21 @@ contract StrategyProxy {
     ) public returns (uint256) {
         require(strategies[_gauge] == msg.sender, "!strategy");
         uint256 _balance = IERC20(_token).balanceOf(address(proxy));
-        proxy.safeExecute(_gauge, 0, abi.encodeWithSignature("withdraw(uint256)", _amount));
+        proxy.safeExecute(
+            _gauge,
+            0,
+            abi.encodeWithSignature("withdraw(uint256)", _amount)
+        );
         _balance = IERC20(_token).balanceOf(address(proxy)) - _balance;
-        proxy.safeExecute(_token, 0, abi.encodeWithSignature("transfer(address,uint256)", msg.sender, _balance));
+        proxy.safeExecute(
+            _token,
+            0,
+            abi.encodeWithSignature(
+                "transfer(address,uint256)",
+                msg.sender,
+                _balance
+            )
+        );
         return _balance;
     }
 
@@ -326,7 +373,10 @@ contract StrategyProxy {
     /// @notice Withdraw full balance of voter's LPs from gauge.
     /// @param _gauge The gauge from which to withdraw.
     /// @param _token The LP token to withdraw from gauge.
-    function withdrawAll(address _gauge, address _token) external returns (uint256) {
+    function withdrawAll(
+        address _gauge,
+        address _token
+    ) external returns (uint256) {
         return withdraw(_gauge, _token, balanceOf(_gauge));
     }
 
@@ -341,9 +391,25 @@ contract StrategyProxy {
         IERC20(_token).safeTransfer(address(proxy), _balance);
         _balance = IERC20(_token).balanceOf(address(proxy));
 
-        proxy.safeExecute(_token, 0, abi.encodeWithSignature("approve(address,uint256)", _gauge, 0));
-        proxy.safeExecute(_token, 0, abi.encodeWithSignature("approve(address,uint256)", _gauge, _balance));
-        proxy.safeExecute(_gauge, 0, abi.encodeWithSignature("deposit(uint256)", _balance));
+        proxy.safeExecute(
+            _token,
+            0,
+            abi.encodeWithSignature("approve(address,uint256)", _gauge, 0)
+        );
+        proxy.safeExecute(
+            _token,
+            0,
+            abi.encodeWithSignature(
+                "approve(address,uint256)",
+                _gauge,
+                _balance
+            )
+        );
+        proxy.safeExecute(
+            _gauge,
+            0,
+            abi.encodeWithSignature("deposit(uint256)", _balance)
+        );
     }
 
     /// @notice Abstracts the BAL minting and transfers to an approved strategy with BAL earnings.
@@ -352,9 +418,21 @@ contract StrategyProxy {
     function harvest(address _gauge) external {
         require(strategies[_gauge] == msg.sender, "!strategy");
         uint256 _balance = IERC20(bal).balanceOf(address(proxy));
-        proxy.safeExecute(mintr, 0, abi.encodeWithSignature("mint(address)", _gauge));
+        proxy.safeExecute(
+            mintr,
+            0,
+            abi.encodeWithSignature("mint(address)", _gauge)
+        );
         _balance = IERC20(bal).balanceOf(address(proxy)) - _balance;
-        proxy.safeExecute(bal, 0, abi.encodeWithSignature("transfer(address,uint256)", msg.sender, _balance));
+        proxy.safeExecute(
+            bal,
+            0,
+            abi.encodeWithSignature(
+                "transfer(address,uint256)",
+                msg.sender,
+                _balance
+            )
+        );
     }
 
     /// @notice Claim BAL and our share of weekly admin fees from Balancer fee distributor.
@@ -367,18 +445,34 @@ contract StrategyProxy {
 
         feeDistribution.claimToken(address(proxy), IERC20(bal));
         feeDistribution.claimToken(address(proxy), IERC20(feeToken));
-        
+
         lastTimeCursor = feeDistribution.getUserTimeCursor(address(proxy));
 
         uint amount = IERC20(bal).balanceOf(address(proxy));
         if (amount > 0) {
-            proxy.safeExecute(bal, 0, abi.encodeWithSignature("transfer(address,uint256)", _recipient, amount));
+            proxy.safeExecute(
+                bal,
+                0,
+                abi.encodeWithSignature(
+                    "transfer(address,uint256)",
+                    _recipient,
+                    amount
+                )
+            );
             emit BalFeesClaimed(_recipient, amount);
         }
 
         amount = IERC20(feeToken).balanceOf(address(proxy));
         if (amount > 0) {
-            proxy.safeExecute(feeToken, 0, abi.encodeWithSignature("transfer(address,uint256)", _recipient, amount));
+            proxy.safeExecute(
+                feeToken,
+                0,
+                abi.encodeWithSignature(
+                    "transfer(address,uint256)",
+                    _recipient,
+                    amount
+                )
+            );
             emit AdminFeesClaimed(_recipient, amount);
         }
     }
@@ -406,7 +500,10 @@ contract StrategyProxy {
     /// @dev Must be called by the strategy approved for the given gauge.
     /// @param _gauge The gauge which this strategy is claiming rewards.
     /// @param _tokens The token(s) to be claimed to the approved strategy.
-    function claimManyRewards(address _gauge, address[] memory _tokens) external {
+    function claimManyRewards(
+        address _gauge,
+        address[] memory _tokens
+    ) external {
         require(strategies[_gauge] == msg.sender, "!strategy");
         Gauge(_gauge).claim_rewards(address(proxy));
         for (uint256 i; i < _tokens.length; ++i) {
@@ -420,7 +517,7 @@ contract StrategyProxy {
     /// @param _token The token to be claimed.
     function approveRewardToken(address _token) external {
         require(msg.sender == governance, "!governance");
-        require(_isSafeToken(_token),"!safeToken");
+        require(_isSafeToken(_token), "!safeToken");
         require(!rewardTokenApproved[_token]);
         rewardTokenApproved[_token] = true;
         emit RewardTokenApproved(_token, true);
@@ -450,16 +547,22 @@ contract StrategyProxy {
         if (_token == bal) return false; /// @dev: balweth and bbausd are covered as lp tokens
         try gaugeController.gauge_types(_token) {
             return false;
-        }
-        catch {} /// @dev: Since we expect try should fail, proceed without any catch logic error here.
+        } catch {} /// @dev: Since we expect try should fail, proceed without any catch logic error here.
         try IPool(_token).getPoolId() {
             return false;
-        }
-        catch {} /// @dev: Since we expect try should fail, proceed without any catch logic error here.
+        } catch {} /// @dev: Since we expect try should fail, proceed without any catch logic error here.
         return true;
     }
 
     function _transferBalance(address _token) internal {
-        proxy.safeExecute(_token, 0, abi.encodeWithSignature("transfer(address,uint256)", msg.sender, IERC20(_token).balanceOf(address(proxy))));
+        proxy.safeExecute(
+            _token,
+            0,
+            abi.encodeWithSignature(
+                "transfer(address,uint256)",
+                msg.sender,
+                IERC20(_token).balanceOf(address(proxy))
+            )
+        );
     }
 }

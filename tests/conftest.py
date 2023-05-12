@@ -407,7 +407,7 @@ def test_staking_address():
 # must be 0, 1, or 2 for convex, curve, and frax. Only test 2 (Frax) for pools that actually have frax (not balancer).
 @pytest.fixture(scope="session")
 def which_strategy():
-    which_strategy = 1
+    which_strategy = 0
     yield which_strategy
 
 
