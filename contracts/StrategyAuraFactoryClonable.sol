@@ -100,7 +100,7 @@ interface IConvexDeposit {
     ) external view returns (address, address, address, address, address, bool);
 }
 
-contract StrategyConvexFactoryClonable is BaseStrategy {
+contract StrategyAuraFactoryClonable is BaseStrategy {
     using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */
@@ -234,7 +234,7 @@ contract StrategyConvexFactoryClonable is BaseStrategy {
             newStrategy := create(0, clone_code, 0x37)
         }
 
-        StrategyConvexFactoryClonable(newStrategy).initialize(
+        StrategyAuraFactoryClonable(newStrategy).initialize(
             _vault,
             _strategist,
             _rewards,
@@ -337,7 +337,7 @@ contract StrategyConvexFactoryClonable is BaseStrategy {
         return
             string(
                 abi.encodePacked(
-                    "StrategyConvexFactory-",
+                    "StrategyAuraFactory-",
                     IDetails(address(want)).symbol()
                 )
             );

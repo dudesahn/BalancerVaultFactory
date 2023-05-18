@@ -5,8 +5,8 @@ import pytest
 
 
 def test_vault_deployment(
-    StrategyConvexFactoryClonable,
-    StrategyCurveBoostedFactoryClonable,
+    StrategyAuraFactoryClonable,
+    StrategyBalancerBoostedFactoryClonable,
     strategist,
     curve_global,
     gov,
@@ -90,7 +90,7 @@ def test_vault_deployment(
 
     # print our addresses
     cvx_strat = tx.events["NewAutomatedVault"]["convexStrategy"]
-    convex_strategy = StrategyConvexFactoryClonable.at(cvx_strat)
+    convex_strategy = StrategyAuraFactoryClonable.at(cvx_strat)
 
     # check that everything is setup properly for our vault
     assert vault.governance() == curve_global.address
@@ -127,7 +127,7 @@ def test_vault_deployment(
 
     curve_strat = tx.events["NewAutomatedVault"]["curveStrategy"]
     if curve_strat != ZERO_ADDRESS:
-        curve_strategy = StrategyCurveBoostedFactoryClonable.at(curve_strat)
+        curve_strategy = StrategyBalancerBoostedFactoryClonable.at(curve_strat)
         # curve
         assert vault.withdrawalQueue(1) == curve_strat
         assert vault.strategies(curve_strat)["performanceFee"] == 0
@@ -181,8 +181,8 @@ def test_vault_deployment(
 
 
 def test_permissioned_vault(
-    StrategyConvexFactoryClonable,
-    StrategyCurveBoostedFactoryClonable,
+    StrategyAuraFactoryClonable,
+    StrategyBalancerBoostedFactoryClonable,
     strategist,
     curve_global,
     gov,
@@ -292,7 +292,7 @@ def test_permissioned_vault(
 
     # convex
     cvx_strat = tx.events["NewAutomatedVault"]["convexStrategy"]
-    convex_strategy = StrategyConvexFactoryClonable.at(cvx_strat)
+    convex_strategy = StrategyAuraFactoryClonable.at(cvx_strat)
     print("Convex strategy:", cvx_strat)
 
     assert vault.withdrawalQueue(0) == cvx_strat
@@ -319,7 +319,7 @@ def test_permissioned_vault(
 
     # curve
     curve_strat = tx.events["NewAutomatedVault"]["curveStrategy"]
-    curve_strategy = StrategyCurveBoostedFactoryClonable.at(curve_strat)
+    curve_strategy = StrategyBalancerBoostedFactoryClonable.at(curve_strat)
     print("Curve strategy:", curve_strat)
 
     # curve
@@ -366,8 +366,8 @@ def test_permissioned_vault(
 
 
 def test_no_curve(
-    StrategyConvexFactoryClonable,
-    StrategyCurveBoostedFactoryClonable,
+    StrategyAuraFactoryClonable,
+    StrategyBalancerBoostedFactoryClonable,
     strategist,
     curve_global,
     gov,
@@ -450,7 +450,7 @@ def test_no_curve(
 
     # convex
     cvx_strat = tx.events["NewAutomatedVault"]["convexStrategy"]
-    convex_strategy = StrategyConvexFactoryClonable.at(cvx_strat)
+    convex_strategy = StrategyAuraFactoryClonable.at(cvx_strat)
     print("Convex strategy:", cvx_strat)
 
     assert vault.withdrawalQueue(0) == cvx_strat

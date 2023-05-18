@@ -113,14 +113,14 @@ def strategy_name():
 # this is the name of our strategy in the .sol file
 @pytest.fixture(scope="session")
 def contract_name(
-    StrategyConvexFactoryClonable,
-    StrategyCurveBoostedFactoryClonable,
+    StrategyAuraFactoryClonable,
+    StrategyBalancerBoostedFactoryClonable,
     which_strategy,
 ):
     if which_strategy == 0:
-        contract_name = StrategyConvexFactoryClonable
+        contract_name = StrategyAuraFactoryClonable
     elif which_strategy == 1:
-        contract_name = StrategyCurveBoostedFactoryClonable
+        contract_name = StrategyBalancerBoostedFactoryClonable
     yield contract_name
 
 
@@ -564,7 +564,7 @@ def gauge(pid, booster):
 
 @pytest.fixture(scope="module")
 def convex_template(
-    StrategyConvexFactoryClonable,
+    StrategyAuraFactoryClonable,
     trade_factory,
     template_vault,
     gov,
@@ -574,7 +574,7 @@ def convex_template(
 ):
     # deploy our convex template
     convex_template = gov.deploy(
-        StrategyConvexFactoryClonable,
+        StrategyAuraFactoryClonable,
         template_vault,
         trade_factory,
         template_pid,
@@ -590,7 +590,7 @@ def convex_template(
 
 @pytest.fixture(scope="module")
 def curve_template(
-    StrategyCurveBoostedFactoryClonable,
+    StrategyBalancerBoostedFactoryClonable,
     trade_factory,
     template_vault,
     strategist,
@@ -600,7 +600,7 @@ def curve_template(
 ):
     # deploy our curve template
     curve_template = gov.deploy(
-        StrategyCurveBoostedFactoryClonable,
+        StrategyBalancerBoostedFactoryClonable,
         template_vault,
         trade_factory,
         new_proxy,

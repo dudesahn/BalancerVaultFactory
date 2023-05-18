@@ -20,7 +20,7 @@ interface IDetails {
     function symbol() external view returns (string memory);
 }
 
-contract StrategyCurveBoostedFactoryClonable is BaseStrategy {
+contract StrategyBalancerBoostedFactoryClonable is BaseStrategy {
     using SafeERC20 for IERC20;
     /* ========== STATE VARIABLES ========== */
 
@@ -112,7 +112,7 @@ contract StrategyCurveBoostedFactoryClonable is BaseStrategy {
             newStrategy := create(0, clone_code, 0x37)
         }
 
-        StrategyCurveBoostedFactoryClonable(newStrategy).initialize(
+        StrategyBalancerBoostedFactoryClonable(newStrategy).initialize(
             _vault,
             _strategist,
             _rewards,
@@ -177,7 +177,7 @@ contract StrategyCurveBoostedFactoryClonable is BaseStrategy {
         // set our strategy's name
         stratName = string(
             abi.encodePacked(
-                "StrategyCurveBoostedFactory-",
+                "StrategyBalancerBoostedFactory-",
                 IDetails(address(want)).symbol()
             )
         );
