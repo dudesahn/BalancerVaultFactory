@@ -68,8 +68,8 @@ def amount(token):
 def profit_whale(profit_amount, token):
     # ideally not the same whale as the main whale, or else they will lose money
     profit_whale = accounts.at(
-        "0x0BadCe9796CDaB3F3affBaF05F14a75c3Ac801bA", force=True
-    )  # 0x0BadCe9796CDaB3F3affBaF05F14a75c3Ac801bA, rETH pool, 7.7 tokens
+        "0x47E3F033877A9a8Ac49B72EcfE9368A664E4cC5D", force=True
+    )  # 0x47E3F033877A9a8Ac49B72EcfE9368A664E4cC5D, rETH pool, 7.7 tokens
     if token.balanceOf(profit_whale) < 5 * profit_amount:
         raise ValueError(
             "Our profit whale needs more funds. Find another whale or reduce your profit_amount variable."
@@ -521,8 +521,8 @@ def template_gauge():  # bb-USD
 
 
 @pytest.fixture(scope="session")
-def fud_gauge():  # FIAT-USD
-    yield Contract("0xDD4Db3ff8A37FE418dB6FF34fC316655528B6bbC")
+def other_gauge():  # liquity
+    yield Contract("0x63E3951212cCCAFE3eDC7588FD4D20Ee5e7Ad73f")
 
 
 @pytest.fixture(scope="session")

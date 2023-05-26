@@ -24,8 +24,7 @@ def test_vault_deployment(
     keeper_wrapper,
     amount,
     booster,
-    fud_gauge,
-    fud_lp,
+    other_gauge,
 ):
     # once our factory is deployed, setup the factory from gov
     registry_owner = accounts.at(new_registry.owner(), force=True)
@@ -59,9 +58,9 @@ def test_vault_deployment(
         new_proxy.strategies(gauge),
     )
 
-    # make sure we can create this vault permissionlessly
-    assert curve_global.latestStandardVaultFromGauge(fud_gauge) != ZERO_ADDRESS
-    assert not curve_global.canCreateVaultPermissionlessly(fud_gauge)
+    # make sure we can create these vaults permissionlessly
+    assert curve_global.latestStandardVaultFromGauge(other_gauge) == ZERO_ADDRESS
+    assert curve_global.canCreateVaultPermissionlessly(other_gauge)
     assert curve_global.canCreateVaultPermissionlessly(gauge)
 
     # before we deploy, check our gauge. we shouldn't have added this to our proxy yet
@@ -175,10 +174,6 @@ def test_vault_deployment(
         with brownie.reverts("Vault already exists"):
             tx = curve_global.createNewVaultsAndStrategies(gauge, {"from": whale})
 
-        # we can't do our previously existing vault either
-        with brownie.reverts("Vault already exists"):
-            tx = curve_global.createNewVaultsAndStrategies(fud_gauge, {"from": whale})
-
 
 def test_permissioned_vault(
     StrategyAuraFactoryClonable,
@@ -197,7 +192,7 @@ def test_permissioned_vault(
     voter,
     whale,
     tests_using_tenderly,
-    fud_gauge,
+    other_gauge,
     random_gauge_not_on_convex,
 ):
     # deploying curve global with frax strategies doesn't work unless with tenderly;
@@ -339,8 +334,8 @@ def test_permissioned_vault(
     assert vault.governance() == gov.address
     print("Gov accepted by daddy")
 
-    # deploy a FUD vault, should have convex and curve.
-    if pid != 36:
+    # deploy a LUSD/LQTY/WETH vault, should have convex and curve.
+    if pid != 40:
         chain.sleep(1)
         chain.mine(1)
 
@@ -348,12 +343,12 @@ def test_permissioned_vault(
         curve_global.setKeepCRV(0, curve_global.curveVoter(), {"from": gov})
 
         tx = curve_global.createNewVaultsAndStrategiesPermissioned(
-            fud_gauge,
-            "FUD Vault",
-            "yvCurve-FUD",
+            other_gauge,
+            "Liquity Vault",
+            "yvBal-Liquity",
             {"from": curve_global.management()},
         )
-        print("New FUD vault deployed, vault/convex/curve", tx.return_value)
+        print("New Liquity vault deployed, vault/convex/curve", tx.return_value)
         chain.sleep(1)
         chain.mine(1)
 
@@ -382,7 +377,7 @@ def test_no_curve(
     voter,
     whale,
     tests_using_tenderly,
-    fud_gauge,
+    other_gauge,
 ):
     # once our factory is deployed, setup the factory from gov
     registry_owner = accounts.at(new_registry.owner(), force=True)
@@ -479,19 +474,20 @@ def test_no_curve(
     assert vault.governance() == gov.address
     print("Gov accepted by daddy")
 
-    # deploy a FUD vault, should have convex and curve.
-    if pid != 36:
+    # deploy a liquity vault, should have convex only.
+    if pid != 40:
         chain.sleep(1)
         chain.mine(1)
         tx = curve_global.createNewVaultsAndStrategiesPermissioned(
-            fud_gauge,
-            "FUD Vault",
-            "yvCurve-FUD",
+            other_gauge,
+            "Liquity Vault",
+            "yvBal-Liquity",
             {"from": gov},
         )
-        print("New FUD vault deployed, vault/convex/curve", tx.return_value)
-        chain.sleep(1)
-        chain.mine(1)
+        print(
+            "New liquity vault deployed, vault/convex, curve should be zero",
+            tx.return_value,
+        )
 
 
 def test_curve_global_setters_and_views(
@@ -503,7 +499,7 @@ def test_curve_global_setters_and_views(
     gauge,
     pid,
     token,
-    fud_gauge,
+    other_gauge,
     voter,
     new_proxy,
 ):
@@ -538,8 +534,8 @@ def test_curve_global_setters_and_views(
     length = curve_global.numVaults()
     print("Number of vaults:", length)
 
-    # check if we can create vaults
-    assert not curve_global.canCreateVaultPermissionlessly(fud_gauge)
+    # check if we can create vaults, should be yes
+    assert curve_global.canCreateVaultPermissionlessly(other_gauge)
 
     # this one should always be yes (SDT/ETH) as we will almost certainly never make a vault for this
     assert curve_global.canCreateVaultPermissionlessly(
@@ -550,10 +546,10 @@ def test_curve_global_setters_and_views(
     voter.setStrategy(new_proxy.address, {"from": gov})
 
     # this one should be no since we haven't added any gauges to our balancer proxy yet
-    assert not curve_global.doesStrategyProxyHaveGauge(fud_gauge)
+    assert not curve_global.doesStrategyProxyHaveGauge(other_gauge)
 
     # check our latest vault for FUD
-    latest = curve_global.latestStandardVaultFromGauge(fud_gauge)
+    latest = curve_global.latestStandardVaultFromGauge(other_gauge)
     print("Latest FUD vault:", latest)
 
     # check our setters

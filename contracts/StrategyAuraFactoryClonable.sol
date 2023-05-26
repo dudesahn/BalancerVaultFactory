@@ -160,9 +160,6 @@ contract StrategyAuraFactoryClonable is BaseStrategy {
     /// @notice Will only be true on the original deployed contract and not on clones; we don't want to clone a clone.
     bool public isOriginal = true;
 
-    /// @notice A wrapper for CVX in newer rewards pools that doesn't behave like a normal token.
-    address public cvxWrapper;
-
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
@@ -526,11 +523,13 @@ contract StrategyAuraFactoryClonable is BaseStrategy {
     /// @notice Use to add or update rewards, rebuilds tradefactory too
     /// @dev Do this before updating trade factory if we have extra rewards.
     ///  Can only be called by governance.
-    function updateRewards() external onlyGovernance {
+    function updateRewards() external onlyGovernance {	
+        // store this to save our tradefactory address before tearing it down
         address tf = tradeFactory;
         _removeTradeFactoryPermissions(true);
-        _updateRewards();
 
+        // set things up again
+        _updateRewards();
         tradeFactory = tf;
         _setUpTradeFactory();
     }
@@ -548,9 +547,12 @@ contract StrategyAuraFactoryClonable is BaseStrategy {
                 .rewardToken();
 
             // we only need to approve the new token and turn on rewards if the extra reward isn't CVX
-            if (_rewardsToken != _convexToken && _rewardsToken != cvxWrapper) {
-                rewardsTokens.push(_rewardsToken);
+            if (_rewardsToken == _convexToken) {
+                continue;
             }
+
+            // add our approved token to our rewards token array
+            rewardsTokens.push(_rewardsToken);
         }
     }
 
@@ -581,16 +583,40 @@ contract StrategyAuraFactoryClonable is BaseStrategy {
         // enable for any rewards tokens too
         for (uint256 i; i < rewardsTokens.length; ++i) {
             address _rewardsToken = rewardsTokens[i];
-            // cvxWrapper is not a normal token
-            if (_rewardsToken == cvxWrapper) {
+
+            // set approval to max uint, but only if it's a standard token
+            bool success = _callApproveRewardTokens(
+                _rewardsToken,
+                _tradeFactory,
+                type(uint256).max
+            );
+
+            // skip a token we can't approve
+            if (!success) {
                 continue;
             }
-            IERC20(_rewardsToken).approve(_tradeFactory, type(uint256).max);
+
             tf.enable(_rewardsToken, _want);
         }
 
         convexToken.approve(_tradeFactory, type(uint256).max);
         tf.enable(address(convexToken), _want);
+    }
+
+    function _callApproveRewardTokens(
+        address _token,
+        address _spender,
+        uint256 _amount
+    ) internal returns (bool success) {
+        // make sure a given reward token has the approve() method
+        bytes memory data = abi.encodeWithSignature(
+            "approve(address,uint256)",
+            _spender,
+            _amount
+        );
+
+        // if this works, then our reward token will be approved on our tradeFactory
+        (success, ) = _token.call(data);
     }
 
     /// @notice Use this to remove permissions from our current trade factory.
@@ -620,7 +646,18 @@ contract StrategyAuraFactoryClonable is BaseStrategy {
         for (uint256 i; i < rewardsTokens.length; ++i) {
             address _rewardsToken = rewardsTokens[i];
 
-            IERC20(_rewardsToken).approve(_tradeFactory, 0);
+            // set approval to zero, but only if it's a standard token
+            bool success = _callApproveRewardTokens(
+                _rewardsToken,
+                _tradeFactory,
+                0
+            );
+
+            // skip a token we can't approve
+            if (!success) {
+                continue;
+            }
+
             if (_disableTf) {
                 tf.disable(_rewardsToken, _want);
             }
@@ -838,13 +875,6 @@ contract StrategyAuraFactoryClonable is BaseStrategy {
     /// @param _claimRewards Whether we want to claim rewards on withdrawals.
     function setClaimRewards(bool _claimRewards) external onlyVaultManagers {
         claimRewards = _claimRewards;
-    }
-
-    /// @notice Set address for our CVX wrapper.
-    /// @dev For Aura doesn't currently exist, even though it is used for Convex.
-    /// @param _wrapper Address of our wrapper token to skip approvals for.
-    function setCvxWrapper(address _wrapper) external onlyVaultManagers {
-        cvxWrapper = _wrapper;
     }
 
     /**
