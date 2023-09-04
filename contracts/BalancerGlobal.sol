@@ -560,6 +560,7 @@ contract BalancerGlobal {
     function canCreateVaultPermissionlessly(
         address _gauge
     ) public view returns (bool) {
+        if (checkIfGaugeKilled(_gauge)) return false;
         return latestStandardVaultFromGauge(_gauge) == address(0);
     }
 
@@ -678,7 +679,7 @@ contract BalancerGlobal {
         if (!_permissionedUser) {
             require(
                 canCreateVaultPermissionlessly(_gauge),
-                "Vault already exists"
+                "Vault already exists, or gauge killed."
             );
         }
         address lptoken = ICurveGauge(_gauge).lp_token();
@@ -888,5 +889,18 @@ contract BalancerGlobal {
 
         // approve our new voter strategy on the proxy
         proxy.approveStrategy(_gauge, curveStrategy);
+    }
+
+    // Not all gauges implement is_killed. So we use a custom checker.
+    function checkIfGaugeKilled(address _gauge) public view returns (bool) {
+        (bool success, bytes memory data) = _gauge.staticcall(abi.encodeWithSignature("is_killed()"));
+
+        // If the function call was successful and the function returned true, revert.
+        if (success && data.length > 0 && abi.decode(data, (bool))) {
+            return true;
+        }
+
+        // If the function doesn't exist or if it's not killed, return false.
+        return false;
     }
 }
